@@ -4,6 +4,7 @@ Handles argument parsing and default configurations.
 """
 
 import argparse
+import json
 import os
 from dotenv import load_dotenv
 
@@ -48,8 +49,45 @@ DEFAULT_MAX_TOKENS = 500
 DEFAULT_ROUNDS = 5
 
 
+def load_json_config(config_path):
+    """Load configuration from a JSON file."""
+    if not config_path:
+        return {}
+    
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Config file not found: {config_path}")
+    
+    try:
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+        return config
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON in config file: {e}")
+
+
 def parse_arguments():
-    """Parse command-line arguments."""
+    """Parse command-line arguments with support for JSON config file.
+    
+    Precedence order (highest to lowest):
+    1. Command-line arguments
+    2. JSON config file
+    3. Environment variables
+    """
+    # First, create a parser just to get the config file path
+    pre_parser = argparse.ArgumentParser(add_help=False)
+    pre_parser.add_argument('--config', '-c', type=str, help='Path to JSON configuration file')
+    pre_args, _ = pre_parser.parse_known_args()
+    
+    # Load JSON config if provided
+    json_config = load_json_config(pre_args.config) if pre_args.config else {}
+    
+    # Helper function to get default value with precedence: JSON > ENV
+    def get_default(json_key, env_default):
+        """Get default value from JSON config or environment variable."""
+        # Use underscore for nested keys in JSON (e.g., debater1_provider)
+        return json_config.get(json_key, env_default)
+    
+    # Create the main parser
     parser = argparse.ArgumentParser(
         description="AI Debate Application - Let two LLM models debate with each other",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -57,6 +95,9 @@ def parse_arguments():
 Examples:
   # Basic usage with defaults (5 rounds, capitalism debate)
   python debate.py
+  
+  # Use a JSON config file
+  python debate.py --config config.json
   
   # Custom number of rounds
   python debate.py --rounds 10
@@ -69,21 +110,31 @@ Examples:
   
   # Custom base URL
   python debate.py --debater1-base-url https://api.custom-endpoint.com/v1
+  
+  # Combine JSON config with command-line overrides
+  python debate.py --config config.json --rounds 10
         """
+    )
+    
+    # Configuration file
+    parser.add_argument(
+        '--config', '-c',
+        type=str,
+        help='Path to JSON configuration file'
     )
     
     # Debate configuration
     parser.add_argument(
         '--rounds', '-r',
         type=int,
-        default=DEFAULT_ROUNDS,
+        default=get_default('rounds', DEFAULT_ROUNDS),
         help=f'Number of debate rounds (default: {DEFAULT_ROUNDS})'
     )
     
     parser.add_argument(
         '--topic', '-t',
         type=str,
-        default=DEFAULT_TOPIC,
+        default=get_default('topic', DEFAULT_TOPIC),
         help=f'Debate topic (default: "{DEFAULT_TOPIC}")'
     )
     
@@ -92,48 +143,49 @@ Examples:
         '--debater1-provider',
         type=str,
         choices=['openai', 'openrouter'],
-        default=DEFAULT_DEBATER1_PROVIDER,
+        default=get_default('debater1_provider', DEFAULT_DEBATER1_PROVIDER),
         help=f'API provider for debater 1 (default: {DEFAULT_DEBATER1_PROVIDER})'
     )
     
     parser.add_argument(
         '--debater1-model',
         type=str,
-        default=DEFAULT_DEBATER1_MODEL,
+        default=get_default('debater1_model', DEFAULT_DEBATER1_MODEL),
         help=f'Model name for debater 1 (default: {DEFAULT_DEBATER1_MODEL})'
     )
     
     parser.add_argument(
         '--debater1-base-url',
         type=str,
+        default=get_default('debater1_base_url', None),
         help='Custom base URL for debater 1 (optional)'
     )
     
     parser.add_argument(
         '--debater1-persona',
         type=str,
-        default=DEFAULT_DEBATER1_PERSONA,
+        default=get_default('debater1_persona', DEFAULT_DEBATER1_PERSONA),
         help='System prompt/persona for debater 1'
     )
     
     parser.add_argument(
         '--debater1-opening',
         type=str,
-        default=DEFAULT_DEBATER1_OPENING,
+        default=get_default('debater1_opening', DEFAULT_DEBATER1_OPENING),
         help='Opening statement for debater 1'
     )
     
     parser.add_argument(
         '--debater1-temperature',
         type=float,
-        default=DEFAULT_TEMPERATURE,
+        default=get_default('debater1_temperature', DEFAULT_TEMPERATURE),
         help=f'Temperature for debater 1 (default: {DEFAULT_TEMPERATURE})'
     )
     
     parser.add_argument(
         '--debater1-max-tokens',
         type=int,
-        default=DEFAULT_MAX_TOKENS,
+        default=get_default('debater1_max_tokens', DEFAULT_MAX_TOKENS),
         help=f'Max tokens for debater 1 (default: {DEFAULT_MAX_TOKENS})'
     )
     
@@ -142,48 +194,49 @@ Examples:
         '--debater2-provider',
         type=str,
         choices=['openai', 'openrouter'],
-        default=DEFAULT_DEBATER2_PROVIDER,
+        default=get_default('debater2_provider', DEFAULT_DEBATER2_PROVIDER),
         help=f'API provider for debater 2 (default: {DEFAULT_DEBATER2_PROVIDER})'
     )
     
     parser.add_argument(
         '--debater2-model',
         type=str,
-        default=DEFAULT_DEBATER2_MODEL,
+        default=get_default('debater2_model', DEFAULT_DEBATER2_MODEL),
         help=f'Model name for debater 2 (default: {DEFAULT_DEBATER2_MODEL})'
     )
     
     parser.add_argument(
         '--debater2-base-url',
         type=str,
+        default=get_default('debater2_base_url', None),
         help='Custom base URL for debater 2 (optional)'
     )
     
     parser.add_argument(
         '--debater2-persona',
         type=str,
-        default=DEFAULT_DEBATER2_PERSONA,
+        default=get_default('debater2_persona', DEFAULT_DEBATER2_PERSONA),
         help='System prompt/persona for debater 2'
     )
     
     parser.add_argument(
         '--debater2-opening',
         type=str,
-        default=DEFAULT_DEBATER2_OPENING,
+        default=get_default('debater2_opening', DEFAULT_DEBATER2_OPENING),
         help='Opening statement for debater 2'
     )
     
     parser.add_argument(
         '--debater2-temperature',
         type=float,
-        default=DEFAULT_TEMPERATURE,
+        default=get_default('debater2_temperature', DEFAULT_TEMPERATURE),
         help=f'Temperature for debater 2 (default: {DEFAULT_TEMPERATURE})'
     )
     
     parser.add_argument(
         '--debater2-max-tokens',
         type=int,
-        default=DEFAULT_MAX_TOKENS,
+        default=get_default('debater2_max_tokens', DEFAULT_MAX_TOKENS),
         help=f'Max tokens for debater 2 (default: {DEFAULT_MAX_TOKENS})'
     )
     

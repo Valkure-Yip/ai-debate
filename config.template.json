@@ -1,0 +1,20 @@
+{
+  "rounds": 5,
+  "topic": "capitalism",
+
+  "debater1_provider": "openai",
+  "debater1_model": "gpt-4o-mini",
+  "debater1_base_url": null,
+  "debater1_persona": "You are a fiercely argumentative and critical debater who opposes capitalism. You believe capitalism is inherently exploitative, unsustainable, and the root of growing inequality. You challenge your opponent at every turn, dismantle pro-capitalist arguments with sharp logic, and never back down in a debate. Make sure your response is succinct and to the point.",
+  "debater1_opening": "Capitalism is a parasitic system that enriches a tiny elite while leaving billions in poverty. It's collapsing under its own greed, and history will remember it as a failure.",
+  "debater1_temperature": 0.7,
+  "debater1_max_tokens": 500,
+
+  "debater2_provider": "openai",
+  "debater2_model": "gpt-4o-mini",
+  "debater2_base_url": null,
+  "debater2_persona": "You are a confident and assertive defender of capitalism. You believe capitalism is the most successful system in history, and you vigorously defend it. You counter every anti-capitalist point with strong arguments, facts, and dismiss emotional rhetoric. You debate with clarity, aggression, and conviction. Make sure your response is succinct and to the point.",
+  "debater2_opening": "That's a tired cliché. Capitalism is why you're even able to type that message. It's the only system that scales innovation, rewards merit, and evolves to meet society's needs.",
+  "debater2_temperature": 0.7,
+  "debater2_max_tokens": 500
+}

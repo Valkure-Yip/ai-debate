@@ -37,6 +37,10 @@ pip install -r requirements.txt
 
 ### 3. Configure API Keys and Models
 
+You have three ways to configure the application:
+
+#### Option 1: Environment Variables (Recommended for API keys)
+
 Create a `.env` file in the project root. You can start with the template:
 
 ```bash
@@ -64,13 +68,50 @@ DEBATER2_PROVIDER=openrouter
 DEBATER2_MODEL=anthropic/claude-3-haiku
 ```
 
-**Benefits of configuring models in .env:**
-
-- No need to specify provider/model in CLI every time
-- Easy to switch between favorite configurations
-- CLI arguments can still override .env settings
-
 **Note:** You only need the API keys for the providers you plan to use.
+
+#### Option 2: JSON Configuration File (Recommended for debate configurations)
+
+For managing multiple debate configurations, create a JSON config file:
+
+```bash
+cp config.template.json my_debate_config.json
+nano my_debate_config.json  # Edit with your settings
+```
+
+**Example JSON configuration:**
+
+```json
+{
+  "rounds": 8,
+  "topic": "artificial intelligence safety",
+  "debater1_provider": "openai",
+  "debater1_model": "gpt-4o-mini",
+  "debater1_persona": "You are a cautious AI safety researcher...",
+  "debater1_opening": "AI development is outpacing safety measures",
+  "debater1_temperature": 0.8,
+  "debater1_max_tokens": 500,
+  "debater2_provider": "openrouter",
+  "debater2_model": "anthropic/claude-3-haiku",
+  "debater2_persona": "You are an optimistic technologist...",
+  "debater2_opening": "AI is humanity's greatest tool",
+  "debater2_temperature": 0.7,
+  "debater2_max_tokens": 500
+}
+```
+
+**Benefits of JSON configuration:**
+
+- Save and reuse complete debate setups
+- Easy to share debate configurations
+- Cleaner than long command-line arguments
+- Can still override specific settings via CLI
+
+**See [docs/JSON_CONFIG_GUIDE.md](docs/JSON_CONFIG_GUIDE.md) for detailed JSON configuration documentation.**
+
+#### Option 3: Command-Line Arguments
+
+Pass all settings directly via command line (see Usage section below).
 
 ### 4. Configure MCP Tools (Optional)
 
@@ -130,6 +171,24 @@ This will use your configured providers and models from `.env` (or defaults if n
 - Tool usage appears as: `🔧 [Debater 1] Using tool: tavily_search`
 - Detailed logs saved to `logs/debate_tools_TIMESTAMP.log`
 
+### Using JSON Configuration File
+
+Run a debate with a saved configuration:
+
+```bash
+python debate.py --config my_debate_config.json
+```
+
+Override specific settings from the JSON file:
+
+```bash
+# Use JSON config but change number of rounds
+python debate.py --config my_debate_config.json --rounds 10
+
+# Use JSON config but change one debater's model
+python debate.py --config my_debate_config.json --debater1-model gpt-4o
+```
+
 ### Custom Number of Rounds
 
 ```bash
@@ -159,7 +218,7 @@ For using custom OpenAI-compatible endpoints:
 python debate.py --debater1-base-url https://api.custom-endpoint.com/v1
 ```
 
-### Full Customization Example
+### Full Customization Example (Command-Line)
 
 ```bash
 python debate.py \
@@ -178,6 +237,10 @@ python debate.py \
 ```
 
 ## Command-Line Arguments
+
+### Configuration File
+
+- `--config, -c`: Path to JSON configuration file (optional)
 
 ### Debate Configuration
 
@@ -210,11 +273,13 @@ Settings are loaded in this order (later overrides earlier):
 
 1. **Hardcoded defaults** - `openai` provider, `gpt-4o-mini` model
 2. **`.env` file** - `DEBATER1_PROVIDER`, `DEBATER1_MODEL`, etc.
-3. **Command-line arguments** - `--debater1-provider`, `--debater1-model`, etc.
+3. **JSON config file** - Settings from `--config` file (if specified)
+4. **Command-line arguments** - `--debater1-provider`, `--debater1-model`, etc. (highest priority)
 
-**Example:**
+**Examples:**
 
 ```bash
+# Example 1: .env + CLI override
 # .env file contains:
 DEBATER1_PROVIDER=openai
 DEBATER1_MODEL=gpt-4o-mini
@@ -224,11 +289,41 @@ python debate.py --debater1-model gpt-4o
 # Result: Uses openai/gpt-4o (provider from .env, model from CLI)
 ```
 
+```bash
+# Example 2: JSON + CLI override
+# config.json contains:
+{
+  "rounds": 8,
+  "debater1_model": "gpt-4o-mini",
+  "debater2_model": "gpt-4o"
+}
+
+# This command uses JSON config but overrides the rounds:
+python debate.py --config config.json --rounds 3
+# Result: Uses 3 rounds (from CLI), gpt-4o-mini and gpt-4o (from JSON)
+```
+
+```bash
+# Example 3: Full precedence chain
+# .env file contains:
+DEBATER1_MODEL=gpt-3.5-turbo
+
+# config.json contains:
+{
+  "debater1_model": "gpt-4o-mini"
+}
+
+# Command:
+python debate.py --config config.json --debater1-model gpt-4o
+# Result: Uses gpt-4o (CLI > JSON > .env)
+```
+
 This allows you to:
 
-- Set your preferred defaults in `.env`
-- Quickly override specific settings via CLI
-- Run different experiments without editing `.env`
+- Store API keys in `.env` (secure, not committed to git)
+- Save debate configurations in JSON files (shareable, version-controlled)
+- Quickly override specific settings via CLI (experimentation)
+- Reuse configurations without repeating long command lines
 
 ## Help
 
@@ -244,6 +339,7 @@ python debate.py --help
 ai-debate/
 ├── venv/                      # Virtual environment
 ├── .env                       # API keys (create from env.template)
+├── config.template.json       # JSON configuration template
 ├── mcp_config.json           # MCP server configuration (create from template)
 ├── mcp_config.template.json  # MCP configuration template
 ├── requirements.txt          # Python dependencies
@@ -252,6 +348,7 @@ ai-debate/
 ├── mcp_client.py             # MCP client for tool integration
 ├── logs/                     # Tool call logs (auto-created)
 ├── docs/                     # Documentation
+│   ├── JSON_CONFIG_GUIDE.md # JSON configuration guide
 │   ├── MCP_GUIDE.md         # Detailed MCP configuration guide
 │   └── ...                   # Other documentation
 └── README.md                 # This file
