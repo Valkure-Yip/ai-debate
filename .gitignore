@@ -6,6 +6,12 @@ ENV/
 # Environment Variables
 .env
 
+# MCP Configuration (contains API keys)
+mcp_config.json
+
+# Tool Call Logs
+logs/
+
 # Python
 __pycache__/
 *.py[cod]

@@ -8,11 +8,15 @@ Based on the article: [How to Make Two AIs Argue: Building a Real-Time Debate Be
 
 - ✅ Support for **OpenAI** and **OpenRouter** APIs
 - ✅ Customizable base URLs for any OpenAI-compatible endpoint
+- ✅ **MCP (Model Context Protocol)** integration for tool access
+- ✅ Web search capabilities via Tavily MCP server
+- ✅ Extensible tool system - add any MCP server
 - ✅ Default capitalism debate with full customization options
 - ✅ Configurable number of debate rounds
 - ✅ Custom debate topics and personas
 - ✅ Model parameter tuning (temperature, max tokens)
 - ✅ Clean command-line interface with formatted output
+- ✅ Detailed tool call logging
 
 ## Setup
 
@@ -68,6 +72,46 @@ DEBATER2_MODEL=anthropic/claude-3-haiku
 
 **Note:** You only need the API keys for the providers you plan to use.
 
+### 4. Configure MCP Tools (Optional)
+
+MCP (Model Context Protocol) allows debaters to use external tools like web search during debates.
+
+**Quick setup for Tavily web search:**
+
+1. Get a free API key from [Tavily](https://tavily.com/)
+2. Create MCP configuration:
+   ```bash
+   cp mcp_config.template.json mcp_config.json
+   ```
+3. Edit `mcp_config.json` and add your Tavily API key:
+   ```json
+   {
+     "servers": {
+       "tavily": {
+         "command": "npx",
+         "args": [
+           "-y",
+           "mcp-remote",
+           "https://mcp.tavily.com/mcp/?tavilyApiKey=tvly-your-api-key-here"
+         ],
+         "env": {
+           "TAVILY_API_KEY": "tvly-your-api-key-here"
+         }
+       }
+     }
+   }
+   ```
+   **Note:** Replace `tvly-your-api-key-here` with your actual API key in both the URL and env section.
+4. Ensure Node.js is installed: `node --version` (v16+ required)
+
+**Benefits:**
+
+- Debaters can search for current facts and statistics
+- Real-time information enhances debate quality
+- Automatically cited sources
+
+**See [docs/MCP_GUIDE.md](docs/MCP_GUIDE.md) for detailed configuration and adding more tools.**
+
 ## Usage
 
 ### Basic Usage
@@ -79,6 +123,12 @@ python debate.py
 ```
 
 This will use your configured providers and models from `.env` (or defaults if not set).
+
+**With MCP tools enabled:**
+
+- Debaters automatically access tools when needed
+- Tool usage appears as: `🔧 [Debater 1] Using tool: tavily_search`
+- Detailed logs saved to `logs/debate_tools_TIMESTAMP.log`
 
 ### Custom Number of Rounds
 
@@ -192,12 +242,19 @@ python debate.py --help
 
 ```
 ai-debate/
-├── venv/                # Virtual environment
-├── .env                 # API keys (create from example)
-├── requirements.txt     # Python dependencies
-├── config.py           # Configuration and argument parsing
-├── debate.py           # Main debate script
-└── README.md           # This file
+├── venv/                      # Virtual environment
+├── .env                       # API keys (create from env.template)
+├── mcp_config.json           # MCP server configuration (create from template)
+├── mcp_config.template.json  # MCP configuration template
+├── requirements.txt          # Python dependencies
+├── config.py                 # Configuration and argument parsing
+├── debate.py                 # Main debate script
+├── mcp_client.py             # MCP client for tool integration
+├── logs/                     # Tool call logs (auto-created)
+├── docs/                     # Documentation
+│   ├── MCP_GUIDE.md         # Detailed MCP configuration guide
+│   └── ...                   # Other documentation
+└── README.md                 # This file
 ```
 
 ## How It Works
@@ -208,16 +265,26 @@ ai-debate/
    - Model selection
    - System prompt (persona)
    - Response parameters
+   - Access to MCP tools (if configured)
 
-2. **Opening Statements**: Both debaters present their initial positions
+2. **MCP Tool Connection**: If `mcp_config.json` exists:
 
-3. **Debate Rounds**: For each round:
+   - Connect to configured MCP servers (e.g., Tavily for web search)
+   - Load available tools and make them accessible to debaters
+
+3. **Opening Statements**: Both debaters present their initial positions
+
+4. **Debate Rounds**: For each round:
 
    - Debater 1 reads Debater 2's last message and responds
+   - If needed, debater uses tools (web search, file access, etc.)
    - Debater 2 reads Debater 1's new response and counters
+   - Tool calls are logged and displayed
    - All messages are tracked in conversation history
 
-4. **Context Preservation**: Each model maintains its full conversation history, enabling coherent, context-aware responses throughout the debate
+5. **Context Preservation**: Each model maintains its full conversation history, enabling coherent, context-aware responses throughout the debate
+
+6. **Tool Enhancement**: Models automatically decide when to use tools based on their information needs
 
 ## Examples of Debate Topics
 
@@ -269,6 +336,30 @@ If you hit rate limits, try:
 - Using different models (smaller/less popular ones often have higher limits)
 - Adding delays between rounds (modify `debate.py` if needed)
 
+### MCP Server Issues
+
+**"MCP config file not found"**
+
+- This is normal if you haven't configured MCP tools
+- Create `mcp_config.json` from template to enable tools:
+  ```bash
+  cp mcp_config.template.json mcp_config.json
+  ```
+
+**"Failed to connect to 'tavily'"**
+
+- Verify your Tavily API key in `mcp_config.json`
+- Ensure Node.js is installed: `node --version` (requires v16+)
+- Check network connectivity
+
+**Tool calls slowing down debate**
+
+- Tool execution (especially web search) takes time
+- This is expected behavior
+- Consider reducing rounds or max tokens for faster debates
+
+**For detailed MCP troubleshooting**, see [docs/MCP_GUIDE.md](docs/MCP_GUIDE.md)
+
 ## Future Enhancements
 
 Potential upgrades for this application:
@@ -279,6 +370,8 @@ Potential upgrades for this application:
 - Debate judging by a third AI
 - Export debates to various formats (PDF, JSON, HTML)
 - Visual debate flow diagrams
+- Voice synthesis for audio debates
+- Multi-language debate support
 
 ## License
 

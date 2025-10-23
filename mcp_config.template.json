@@ -1,0 +1,34 @@
+{
+  "_comment": "MCP Server Configuration - Copy this to mcp_config.json and add your API keys",
+  "servers": {
+    "tavily": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.tavily.com/mcp/?tavilyApiKey=tvly-your-api-key-here"
+      ],
+      "env": {
+        "TAVILY_API_KEY": "tvly-your-api-key-here"
+      }
+    }
+  },
+  "_examples": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/path/to/allowed/directory"
+      ],
+      "env": null
+    },
+    "custom_server": {
+      "command": "python",
+      "args": ["/path/to/your/mcp_server.py"],
+      "env": {
+        "CUSTOM_API_KEY": "your-key-here"
+      }
+    }
+  }
+}
