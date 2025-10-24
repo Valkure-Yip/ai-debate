@@ -8,8 +8,6 @@ Supports MCP (Model Context Protocol) tools for enhanced capabilities.
 import sys
 import asyncio
 import json
-import os
-from datetime import datetime
 from openai import OpenAI
 from config import (
     parse_arguments,
@@ -17,87 +15,7 @@ from config import (
     get_base_url
 )
 from mcp_client import MCPManager
-
-
-class ToolLogger:
-    """Handles logging of tool calls to a file."""
-    
-    def __init__(self):
-        """Initialize the tool logger."""
-        self.log_file = None
-        self.log_path = None
-        
-    def initialize(self):
-        """Create logs directory and log file."""
-        # Create logs directory if it doesn't exist
-        os.makedirs("logs", exist_ok=True)
-        
-        # Create log file with timestamp
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.log_path = f"logs/debate_tools_{timestamp}.log"
-        self.log_file = open(self.log_path, 'w', encoding='utf-8')
-        
-        # Write header
-        self.log_file.write("=" * 80 + "\n")
-        self.log_file.write("AI Debate - Tool Call Log\n")
-        self.log_file.write(f"Session started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-        self.log_file.write("=" * 80 + "\n\n")
-        self.log_file.flush()
-        
-    def log_tool_call(self, debater_name, tool_name, tool_args, result):
-        """
-        Log a tool call with details.
-        
-        Args:
-            debater_name: Name of the debater making the call
-            tool_name: Name of the tool called
-            tool_args: Arguments passed to the tool
-            result: Result from the tool execution
-        """
-        if not self.log_file:
-            return
-            
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
-        self.log_file.write(f"[{timestamp}] {debater_name}\n")
-        self.log_file.write("-" * 80 + "\n")
-        self.log_file.write(f"Tool: {tool_name}\n")
-        self.log_file.write(f"Arguments:\n{json.dumps(tool_args, indent=2)}\n")
-        self.log_file.write("Result:\n")
-        
-        # Format MCP result for logging
-        try:
-            if hasattr(result, 'content'):
-                # Handle MCP content which can be a list of content items
-                if isinstance(result.content, list):
-                    for i, item in enumerate(result.content):
-                        if hasattr(item, 'text'):
-                            self.log_file.write(f"  Content[{i}] (text):\n")
-                            self.log_file.write(f"    {item.text}\n")
-                        elif hasattr(item, '__dict__'):
-                            self.log_file.write(f"  Content[{i}]:\n")
-                            self.log_file.write(f"    {json.dumps(item.__dict__, indent=4, default=str)}\n")
-                        else:
-                            self.log_file.write(f"  Content[{i}]: {str(item)}\n")
-                else:
-                    self.log_file.write(f"  {json.dumps(result.content, indent=2, default=str)}\n")
-            else:
-                # Fallback for non-standard result objects
-                self.log_file.write(f"  {json.dumps(result.__dict__ if hasattr(result, '__dict__') else str(result), indent=2, default=str)}\n")
-        except Exception as e:
-            self.log_file.write(f"  [Error formatting result: {str(e)}]\n")
-            self.log_file.write(f"  Raw result: {str(result)}\n")
-        
-        self.log_file.write("=" * 80 + "\n\n")
-        self.log_file.flush()
-        
-    def close(self):
-        """Close the log file."""
-        if self.log_file:
-            self.log_file.write(f"\nSession ended: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            self.log_file.close()
-            if self.log_path:
-                print(f"\n📝 Tool call log saved to: {self.log_path}")
+from logger import DebateLogger, ToolLogger
 
 
 class DebateModel:
@@ -166,6 +84,7 @@ class DebateModel:
                 model=self.model,
                 messages=full_messages,
                 temperature=self.temperature,
+                reasoning_effort="medium",
                 max_tokens=self.max_tokens,
                 tools=tools if tools else None
             )
@@ -308,6 +227,11 @@ async def run_debate(args):
     print(f"Rounds: {args.rounds}")
     print("=" * 80 + "\n")
     
+    # Initialize debate logger
+    debate_logger = DebateLogger(args.topic, args.rounds)
+    debate_logger.initialize()
+    print(f"📄 Debate transcript logging enabled\n")
+    
     # Initialize MCP Manager
     mcp_manager = MCPManager()
     mcp_connected = await mcp_manager.connect_servers()
@@ -354,6 +278,7 @@ async def run_debate(args):
         await mcp_manager.cleanup()
         if tool_logger:
             tool_logger.close()
+        debate_logger.close()
         sys.exit(1)
     
     print("\n🎬 Starting debate...\n")
@@ -361,6 +286,10 @@ async def run_debate(args):
     # Print opening statements
     print_message("Debater 1", args.debater1_opening, is_opening=True)
     print_message("Debater 2", args.debater2_opening, is_opening=True)
+    
+    # Log opening statements
+    debate_logger.log_opening_statement("Debater 1", args.debater1_opening)
+    debate_logger.log_opening_statement("Debater 2", args.debater2_opening)
     
     # Initialize message histories with opening statements
     debater1.add_message("assistant", args.debater1_opening)
@@ -372,22 +301,28 @@ async def run_debate(args):
         print(f"🔄 ROUND {round_num}/{args.rounds}")
         print(f"{'=' * 80}\n")
         
+        # Log round header
+        debate_logger.log_round_header(round_num)
+        
         try:
             # Debater 1 responds to Debater 2's last message
             debater1.add_message("user", debater2.messages[-1]["content"])
             response1 = await debater1.generate_response()
             print_message("Debater 1", response1)
+            debate_logger.log_message("Debater 1", response1)
             
             # Debater 2 responds to Debater 1's new message
             debater2.add_message("user", response1)
             response2 = await debater2.generate_response()
             print_message("Debater 2", response2)
+            debate_logger.log_message("Debater 2", response2)
             
         except Exception as e:
             print(f"\n❌ Debate stopped due to error in round {round_num}", file=sys.stderr)
             await mcp_manager.cleanup()
             if tool_logger:
                 tool_logger.close()
+            debate_logger.close()
             sys.exit(1)
     
     # Debate conclusion
@@ -398,10 +333,14 @@ async def run_debate(args):
     print(f"Thank you for watching this AI debate on {args.topic}!")
     print()
     
+    # Log conclusion
+    debate_logger.log_conclusion()
+    
     # Cleanup
     await mcp_manager.cleanup()
     if tool_logger:
         tool_logger.close()
+    debate_logger.close()
 
 
 def main():
