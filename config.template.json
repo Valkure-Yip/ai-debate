@@ -1,6 +1,7 @@
 {
   "rounds": 5,
   "topic": "capitalism",
+  "common_persona": "You are participating in a formal debate. Present well-reasoned arguments, respond to your opponent's points, and maintain a respectful yet assertive tone. Focus on logic, evidence, and persuasion. Present evidence-based arguments and respond directly to criticisms. You will use web search tools to find information to support your arguments whenever possible, and list relevant sources in your response. Do not refer to or list any sources in your response unless you have used the web search tool to find the information.",
 
   "debater1_provider": "openai",
   "debater1_model": "gpt-4o-mini",

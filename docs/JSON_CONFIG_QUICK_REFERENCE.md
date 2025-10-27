@@ -20,6 +20,7 @@ python debate.py --config my_debate.json
 | `--config`               | (command-line only)    | `"config.json"`               |
 | `--rounds`               | `rounds`               | `5`                           |
 | `--topic`                | `topic`                | `"climate change"`            |
+| `--common-persona`       | `common_persona`       | `"You are participating..."`  |
 | `--debater1-provider`    | `debater1_provider`    | `"openai"`                    |
 | `--debater1-model`       | `debater1_model`       | `"gpt-4o-mini"`               |
 | `--debater1-base-url`    | `debater1_base_url`    | `"https://api.custom.com/v1"` |
@@ -53,6 +54,7 @@ CLI Arguments > JSON Config > .env File > Defaults
 {
   "rounds": 5,
   "topic": "universal basic income",
+  "common_persona": "You are participating in a formal debate. Present well-reasoned arguments, respond to your opponent's points, and maintain a respectful yet assertive tone.",
   "debater1_provider": "openai",
   "debater1_model": "gpt-4o-mini",
   "debater1_persona": "You are an advocate for UBI...",

@@ -19,6 +19,17 @@ DEFAULT_DEBATER1_PROVIDER = os.getenv('DEBATER1_PROVIDER', 'openai')
 DEFAULT_DEBATER1_MODEL = os.getenv('DEBATER1_MODEL', 'gpt-4o-mini')
 DEFAULT_DEBATER2_PROVIDER = os.getenv('DEBATER2_PROVIDER', 'openai')
 DEFAULT_DEBATER2_MODEL = os.getenv('DEBATER2_MODEL', 'gpt-4o-mini')
+
+# Default common persona applied to all debaters
+DEFAULT_COMMON_PERSONA = (
+    "You are participating in a formal debate. "
+    "Present well-reasoned arguments, respond to your opponent's points, "
+    "and maintain a respectful yet assertive tone. "
+    "Focus on logic, evidence, and persuasion. "
+    "Present evidence-based arguments and respond directly to criticisms. You will use web search tools to find information to support your arguments whenever possible, and list relevant sources in your response."
+    "Do not refer to or list any sources in your response unless you have used the web search tool to find the information."
+)
+
 DEFAULT_DEBATER1_PERSONA = (
     "You are a fiercely argumentative and critical debater who opposes capitalism. "
     "You believe capitalism is inherently exploitative, unsustainable, and the root of growing inequality. "
@@ -136,6 +147,13 @@ Examples:
         type=str,
         default=get_default('topic', DEFAULT_TOPIC),
         help=f'Debate topic (default: "{DEFAULT_TOPIC}")'
+    )
+    
+    parser.add_argument(
+        '--common-persona',
+        type=str,
+        default=get_default('common_persona', DEFAULT_COMMON_PERSONA),
+        help='Common persona/instructions applied to both debaters'
     )
     
     # Debater 1 configuration

@@ -85,6 +85,7 @@ nano my_debate_config.json  # Edit with your settings
 {
   "rounds": 8,
   "topic": "artificial intelligence safety",
+  "common_persona": "You are participating in a formal debate. Present well-reasoned arguments, respond to your opponent's points, and maintain a respectful yet assertive tone.",
   "debater1_provider": "openai",
   "debater1_model": "gpt-4o-mini",
   "debater1_persona": "You are a cautious AI safety researcher...",
@@ -246,6 +247,7 @@ python debate.py \
 
 - `--rounds, -r`: Number of debate rounds (default: 5)
 - `--topic, -t`: Debate topic (default: "capitalism")
+- `--common-persona`: Common instructions applied to both debaters' system prompts (optional)
 
 ### Debater 1 Configuration
 

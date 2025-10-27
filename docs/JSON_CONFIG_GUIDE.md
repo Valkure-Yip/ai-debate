@@ -39,6 +39,7 @@ A JSON configuration file can contain any or all of the following parameters:
 {
   "rounds": 5,
   "topic": "your debate topic",
+  "common_persona": "Common instructions for both debaters (optional)",
 
   "debater1_provider": "openai",
   "debater1_model": "gpt-4o-mini",
@@ -60,18 +61,19 @@ A JSON configuration file can contain any or all of the following parameters:
 
 ### Parameter Reference
 
-| Parameter              | Type           | Description                                | Example                       |
-| ---------------------- | -------------- | ------------------------------------------ | ----------------------------- |
-| `rounds`               | integer        | Number of debate rounds                    | `5`                           |
-| `topic`                | string         | Debate topic                               | `"climate change"`            |
-| `debater1_provider`    | string         | API provider: `"openai"` or `"openrouter"` | `"openai"`                    |
-| `debater1_model`       | string         | Model identifier                           | `"gpt-4o-mini"`               |
-| `debater1_base_url`    | string or null | Custom API endpoint (optional)             | `"https://api.custom.com/v1"` |
-| `debater1_persona`     | string         | System prompt defining stance              | `"You are a..."`              |
-| `debater1_opening`     | string         | Opening statement                          | `"I believe..."`              |
-| `debater1_temperature` | float          | Sampling temperature (0.0-2.0)             | `0.7`                         |
-| `debater1_max_tokens`  | integer        | Maximum response length                    | `500`                         |
-| `debater2_*`           | various        | Same parameters for debater 2              | -                             |
+| Parameter              | Type           | Description                                      | Example                         |
+| ---------------------- | -------------- | ------------------------------------------------ | ------------------------------- |
+| `rounds`               | integer        | Number of debate rounds                          | `5`                             |
+| `topic`                | string         | Debate topic                                     | `"climate change"`              |
+| `common_persona`       | string         | Common instructions for both debaters (optional) | `"You are participating in..."` |
+| `debater1_provider`    | string         | API provider: `"openai"` or `"openrouter"`       | `"openai"`                      |
+| `debater1_model`       | string         | Model identifier                                 | `"gpt-4o-mini"`                 |
+| `debater1_base_url`    | string or null | Custom API endpoint (optional)                   | `"https://api.custom.com/v1"`   |
+| `debater1_persona`     | string         | System prompt defining stance                    | `"You are a..."`                |
+| `debater1_opening`     | string         | Opening statement                                | `"I believe..."`                |
+| `debater1_temperature` | float          | Sampling temperature (0.0-2.0)                   | `0.7`                           |
+| `debater1_max_tokens`  | integer        | Maximum response length                          | `500`                           |
+| `debater2_*`           | various        | Same parameters for debater 2                    | -                               |
 
 **Note:** All parameters are optional. Any parameter not specified in the JSON will fall back to environment variables or hardcoded defaults.
 
@@ -168,6 +170,7 @@ Result:
 {
   "rounds": 6,
   "topic": "free will vs determinism",
+  "common_persona": "You are a skilled philosopher engaged in formal debate. Present rigorous arguments grounded in logic and philosophical tradition.",
   "debater1_provider": "openai",
   "debater1_model": "gpt-4o-mini",
   "debater1_persona": "You are a philosopher who argues for hard determinism. You believe all events, including human actions, are determined by prior causes. Challenge the notion of free will with logical arguments.",

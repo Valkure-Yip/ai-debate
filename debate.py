@@ -243,6 +243,11 @@ async def run_debate(args):
         tool_logger.initialize()
         print(f"📝 Tool call logging enabled\n")
     
+    # Combine common persona with individual personas
+    common_persona = args.common_persona
+    debater1_full_persona = f"{common_persona}\n\n{args.debater1_persona}"
+    debater2_full_persona = f"{common_persona}\n\n{args.debater2_persona}"
+    
     # Initialize debaters
     try:
         debater1 = DebateModel(
@@ -251,7 +256,7 @@ async def run_debate(args):
             model=args.debater1_model,
             base_url=get_base_url(args.debater1_provider, args.debater1_base_url),
             api_key=get_api_key(args.debater1_provider),
-            system_prompt=args.debater1_persona,
+            system_prompt=debater1_full_persona,
             temperature=args.debater1_temperature,
             max_tokens=args.debater1_max_tokens,
             mcp_manager=mcp_manager if mcp_connected else None,
@@ -264,7 +269,7 @@ async def run_debate(args):
             model=args.debater2_model,
             base_url=get_base_url(args.debater2_provider, args.debater2_base_url),
             api_key=get_api_key(args.debater2_provider),
-            system_prompt=args.debater2_persona,
+            system_prompt=debater2_full_persona,
             temperature=args.debater2_temperature,
             max_tokens=args.debater2_max_tokens,
             mcp_manager=mcp_manager if mcp_connected else None,
